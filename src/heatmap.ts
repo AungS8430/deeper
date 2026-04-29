@@ -94,6 +94,9 @@ export class HeatmapEngine {
             }
         }
         if (visibleLines.size > 0) {
+            for (const l of visibleLines) {
+                fileMap.set(l, { lastTouched: now });
+            }
             this.setCursorLines([...visibleLines]);
         }
 
