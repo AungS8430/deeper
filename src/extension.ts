@@ -2,6 +2,8 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
 
+import { HeatmapEngine } from './heatmap';
+
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
@@ -20,6 +22,34 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 
 	context.subscriptions.push(disposable);
+
+	const heatmap = new HeatmapEngine();
+	if (vscode.window.activeTextEditor) heatmap.startAutoRefresh(vscode.window.activeTextEditor);
+
+	context.subscriptions.push(
+		vscode.window.onDidChangeTextEditorSelection(e => {
+			const lines = e.selections.map(s => s.active.line);
+			heatmap.touch(e.textEditor, lines);
+		})
+	)
+
+	context.subscriptions.push(
+		vscode.workspace.onDidChangeTextDocument(e => {
+			const editor = vscode.window.activeTextEditor;
+			if (!editor || editor.document !== e.document) return;
+			const lines = e.contentChanges.map(c => c.range.start.line);
+			heatmap.touch(editor, lines);
+		})
+	)
+
+	context.subscriptions.push(
+		vscode.window.onDidChangeActiveTextEditor(e => {
+			if (!e) return;
+			heatmap.startAutoRefresh(e);
+		})
+	)
+
+	context.subscriptions.push(heatmap);
 }
 
 // This method is called when your extension is deactivated
