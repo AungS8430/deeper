@@ -6,7 +6,7 @@ import { HeatmapEngine } from './heatmap';
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
-export function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {
 
 	// Use the console to output diagnostic information (console.log) and errors (console.error)
 	// This line of code will only be executed once when your extension is activated
@@ -24,28 +24,28 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(disposable);
 
 	const heatmap = new HeatmapEngine();
-	if (vscode.window.activeTextEditor) heatmap.startAutoRefresh(vscode.window.activeTextEditor);
+	if (vscode.window.activeTextEditor) await heatmap.startAutoRefresh(vscode.window.activeTextEditor);
 
 	context.subscriptions.push(
-		vscode.window.onDidChangeTextEditorSelection(e => {
+		vscode.window.onDidChangeTextEditorSelection(async e => {
 			const lines = e.selections.map(s => s.active.line);
-			heatmap.touch(e.textEditor, lines);
+			await heatmap.touch(e.textEditor, lines);
 		})
 	)
 
 	context.subscriptions.push(
-		vscode.workspace.onDidChangeTextDocument(e => {
+		vscode.workspace.onDidChangeTextDocument(async e => {
 			const editor = vscode.window.activeTextEditor;
 			if (!editor || editor.document !== e.document) return;
 			const lines = e.contentChanges.map(c => c.range.start.line);
-			heatmap.touch(editor, lines);
+			await heatmap.touch(editor, lines);
 		})
 	)
 
 	context.subscriptions.push(
-		vscode.window.onDidChangeActiveTextEditor(e => {
+		vscode.window.onDidChangeActiveTextEditor(async e => {
 			if (!e) return;
-			heatmap.startAutoRefresh(e);
+			await heatmap.startAutoRefresh(e);
 		})
 	)
 

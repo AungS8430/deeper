@@ -1,3 +1,4 @@
 {
-    "deeper.dimAfter": 10
+    "deeper.dimAfter": 10,
+    "deeper.maxFocusRange": 20
 }
