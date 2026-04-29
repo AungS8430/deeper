@@ -14,6 +14,9 @@ function findContainingSymbol(
             if (childResult && childResult.range.start.line == childResult.range.end.line) {
                 return symbol;
             }
+            if (childResult && childResult.range.start.line == childResult.range.end.line) {
+                return symbol;
+            }
             return childResult || symbol;
         }
     }
@@ -68,7 +71,7 @@ export class HeatmapEngine {
         const visibleLines: Set<number> = new Set();
         for (const line of hotLines) {
             const symbol = findContainingSymbol(line, symbols || []);
-            if (symbol) {
+            if (symbol && symbol.range.start.line != symbol.range.end.line) {
                 for (let l = Math.max(symbol.range.start.line, findContainingSymbol(line - maxFocusRange, symbols || [])?.range.start.line ?? line - maxFocusRange); l <= Math.min(symbol.range.end.line, findContainingSymbol(line + maxFocusRange, symbols || [])?.range.end.line ?? line + maxFocusRange); l++) {
                     visibleLines.add(l);
                 }
