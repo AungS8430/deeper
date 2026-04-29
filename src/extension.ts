@@ -30,11 +30,6 @@ export async function activate(context: vscode.ExtensionContext) {
 		vscode.window.onDidChangeTextEditorSelection(async e => {
 			const lines = e.selections.map(s => s.active.line);
 			await heatmap.touch(e.textEditor, lines);
-			try {
-				await heatmap.touch(e.textEditor, lines);
-			} catch (error) {
-				console.error("Failed to update heatmap:", error);
-			}
 		})
 	)
 

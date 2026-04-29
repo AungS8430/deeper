@@ -94,7 +94,7 @@ export class HeatmapEngine {
             }
         }
         if (visibleLines.size > 0) {
-            for (const l of visibleLines) {
+            for (const l of this.cursorLines || []) {
                 fileMap.set(l, { lastTouched: now });
             }
             this.setCursorLines([...visibleLines]);
@@ -111,7 +111,7 @@ export class HeatmapEngine {
                 tierRanges[tierIndex].push(editor.document.lineAt(i).range);
             }
         }
-        
+
         for (let i = 0; i < this.decoration.length; i++) {
             editor.setDecorations(this.decoration[i].type, tierRanges[i]);
         }
