@@ -11,7 +11,7 @@ function findContainingSymbol(
     for (const symbol of symbols) {
         if (symbol.range.start.line <= line && symbol.range.end.line >= line) {
             const childResult = findContainingSymbol(line, symbol.children);
-            if (childResult && childResult.range.start.line == childResult.range.end.line) {
+            if (childResult && childResult.range.start.line === childResult.range.end.line) {
                 return symbol;
             }
             return childResult || symbol;
@@ -43,18 +43,25 @@ export class HeatmapEngine {
                 }),
             },
             {
+                maxAge: 1,
+                type: vscode.window.createTextEditorDecorationType({
+                    opacity: '0.25',
+                    isWholeLine: true,
+                }),
+            },
+            {
                 maxAge: Infinity,
                 type: vscode.window.createTextEditorDecorationType({
                     opacity: '0.25',
                     isWholeLine: true,
                 }),
             }
-        ]
+        ];
     }
 
     async touch(editor: vscode.TextEditor, lines: number[]) {
         const name = editor.document.fileName;
-        if (!this.lineData.has(name)) this.lineData.set(name, new Map());
+        if (!this.lineData.has(name)) { this.lineData.set(name, new Map()); }
 
         await this.refresh(editor, lines);
     }
@@ -65,10 +72,10 @@ export class HeatmapEngine {
 
     async refresh(editor: vscode.TextEditor, currentLines?: number[]) {
         const name = editor.document.fileName;
-        if (!this.lineData.has(name)) return;
+        if (!this.lineData.has(name)) { return; }
         const fileMap = this.lineData.get(name)!;
-        const dimAfter = (vscode.workspace.getConfiguration('deeper').get<number>('dimAfter') || 1) * 1_000;
-        const maxFocusRange = vscode.workspace.getConfiguration('deeper').get<number>('maxFocusRange') || 20;
+        const dimAfter = (vscode.workspace.getConfiguration('deeper').get<number>('dimAfter') || 3) * 60_000;
+        const maxFocusRange = vscode.workspace.getConfiguration('deeper').get<number>('maxFocusRange') || 10;
 
         const now = Date.now();
         const tierRanges: vscode.Range[][] = this.decoration.map(() => []);
@@ -76,12 +83,12 @@ export class HeatmapEngine {
         const symbols = await vscode.commands.executeCommand<vscode.DocumentSymbol[]>(
             'vscode.executeDocumentSymbolProvider',
             editor.document.uri
-        )
+        );
 
         const visibleLines: Set<number> = new Set();
         for (const line of currentLines || []) {
             const symbol = findContainingSymbol(line, symbols || []);
-            if (symbol && symbol.range.start.line != symbol.range.end.line) {
+            if (symbol && symbol.range.start.line !== symbol.range.end.line) {
                 for (let l = Math.max(symbol.range.start.line, findContainingSymbol(line - maxFocusRange, symbols || [])?.range.start.line ?? line - maxFocusRange); l <= Math.min(symbol.range.end.line, findContainingSymbol(line + maxFocusRange, symbols || [])?.range.end.line ?? line + maxFocusRange); l++) {
                     visibleLines.add(l);
                     fileMap.set(l, { lastTouched: now });
@@ -101,7 +108,7 @@ export class HeatmapEngine {
         }
 
         for (let i = 0; i < editor.document.lineCount; i++) {
-            if (this.cursorLines.has(i)) continue;
+            if (this.cursorLines.has(i)) { continue; }
 
             const heat = fileMap.get(i);
             const age = heat ? (now - heat.lastTouched) / dimAfter : Infinity;
@@ -119,7 +126,7 @@ export class HeatmapEngine {
 
     async startAutoRefresh(editor: vscode.TextEditor) {
         clearInterval(this.timer!);
-        this.timer = setInterval(() => this.refresh(editor), 60_000);
+        this.timer = setInterval(() => this.refresh(editor), (vscode.workspace.getConfiguration('deeper').get<number>('refreshInterval') || 5) * 1_000);
     }
 
     dispose() {
