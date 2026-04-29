@@ -1,7 +1,13 @@
 {
   "name": "deeper",
   "displayName": "deeper",
+  "publisher": "AungS8430",
   "description": "Increasing productivity by focusing on the current active context",
+  "icon": "images/icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AungS8430/deeper.git"
+  },
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.116.0"
@@ -9,15 +15,31 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": ["*"],
+  "activationEvents": [
+    "*"
+  ],
   "main": "./out/extension.js",
   "contributes": {
-    "commands": [
-      {
-        "command": "deeper.helloWorld",
-        "title": "Hello World"
+    "configuration": {
+      "title": "Deeper Extension Configurations",
+      "properties": {
+        "deeper.dimAfter": {
+          "type": "number",
+          "default": 3,
+          "description": "Number of minutes after which a line is fully dimmed (considered inactive)."
+        },
+        "deeper.maxFocusRange": {
+          "type": "number",
+          "default": 10,
+          "description": "Maximum number of lines above and below the cursor to be considered 'focused'."
+        },
+        "deeper.refreshInterval": {
+          "type": "number",
+          "default": 5,
+          "description": "Interval in seconds for refreshing the heatmap visualization."
+        }
       }
-    ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "pnpm run compile",
@@ -25,16 +47,23 @@
     "watch": "tsc -watch -p ./",
     "pretest": "pnpm run compile && pnpm run lint",
     "lint": "eslint src",
-    "test": "vscode-test"
+    "test": "vscode-test",
+    "bundle": "webpack --mode production",
+    "package": "vsce package --no-dependencies",
+    "publish": "vsce publish --no-dependencies"
   },
   "devDependencies": {
-    "@types/vscode": "^1.116.0",
     "@types/mocha": "^10.0.10",
     "@types/node": "22.x",
-    "typescript-eslint": "^8.56.1",
-    "eslint": "^9.39.3",
-    "typescript": "^5.9.3",
+    "@types/vscode": "^1.116.0",
     "@vscode/test-cli": "^0.0.12",
-    "@vscode/test-electron": "^2.5.2"
+    "@vscode/test-electron": "^2.5.2",
+    "@vscode/vsce": "^3.9.1",
+    "eslint": "^9.39.3",
+    "ts-loader": "^9.5.7",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.56.1",
+    "webpack": "^5.106.2",
+    "webpack-cli": "^7.0.2"
   }
 }

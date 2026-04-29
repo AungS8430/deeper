@@ -1,71 +1,37 @@
-# deeper README
+# deeper
 
-This is the README for your extension "deeper". After writing up a brief description, we recommend including the following sections.
+deeper is a small Visual Studio Code extension that focuses the current function or logical section and dims the rest of the file so developers like you and I can concentrate while editing large files.
 
 ## Features
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+- Focuses the active function/section and visually dims other regions.
+- Updates automatically when you change the cursor, selection, or active editor.
+- Minimal configuration — designed to be unobtrusive while you work.
 
-For example if there is an image subfolder under your extension project workspace:
+## Usage
 
-\!\[feature X\]\(images/feature-x.png\)
+The extension activates automatically when you edit files or change selections. It detects the current function or nearest structural block and highlights it while applying a subtle dimming overlay to other text, helping you stay focused on the current context.
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+Development / local testing:
 
-## Requirements
+1. Install dependencies: `pnpm install`
+2. Compile TypeScript: `pnpm run compile`
+3. Launch the extension in a Development Host: press `F5` in VS Code.
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+## Development
 
-## Extension Settings
+- Entry point: `src/extension.ts`
+- Core logic: `src/heatmap.ts` (responsible for detecting sections and applying decorations)
+- Build: `pnpm run compile`
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
+## Packaging & Publishing
 
-For example:
+To package a VSIX locally use `pnpm exec vsce package --no-dependencies`.
 
-This extension contributes the following settings:
+## License
 
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
-
-## Known Issues
-
-Calling out known issues can help limit users opening duplicate issues against your extension.
-
-## Release Notes
-
-Users appreciate release notes as you update your extension.
-
-### 1.0.0
-
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
+See the license specified in `LICENSE`.
 
 ---
 
-## Following extension guidelines
-
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
-
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
-
-## Working with Markdown
-
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
-
-## For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
+For more details see the VS Code extension API documentation.
