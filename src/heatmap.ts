@@ -14,9 +14,6 @@ function findContainingSymbol(
             if (childResult && childResult.range.start.line == childResult.range.end.line) {
                 return symbol;
             }
-            if (childResult && childResult.range.start.line == childResult.range.end.line) {
-                return symbol;
-            }
             return childResult || symbol;
         }
     }
@@ -25,29 +22,48 @@ function findContainingSymbol(
 
 export class HeatmapEngine {
     private lineData: Map<string, Map<number, LineHeat>> = new Map();
-    private decoration: vscode.TextEditorDecorationType;
+    private decoration: { maxAge: number; type: vscode.TextEditorDecorationType }[];
     private timer: NodeJS.Timeout | undefined;
+    private cursorLines: Set<number> = new Set();
 
     constructor() {
-        this.decoration = vscode.window.createTextEditorDecorationType({
-            opacity: '0.35',
-            isWholeLine: true,
-        });
+        this.decoration = [
+            {
+                maxAge: 0.33,
+                type: vscode.window.createTextEditorDecorationType({
+                    opacity: '0.75',
+                    isWholeLine: true,
+                }),
+            },
+            {
+                maxAge: 0.66,
+                type: vscode.window.createTextEditorDecorationType({
+                    opacity: '0.5',
+                    isWholeLine: true,
+                }),
+            },
+            {
+                maxAge: Infinity,
+                type: vscode.window.createTextEditorDecorationType({
+                    opacity: '0.25',
+                    isWholeLine: true,
+                }),
+            }
+        ]
     }
 
     async touch(editor: vscode.TextEditor, lines: number[]) {
         const name = editor.document.fileName;
         if (!this.lineData.has(name)) this.lineData.set(name, new Map());
-        const fileMap = this.lineData.get(name)!;
 
-        const now = Date.now();
-        for (const line of lines) {
-            fileMap.set(line, { lastTouched: now });
-        }
-        await this.refresh(editor);
+        await this.refresh(editor, lines);
     }
 
-    async refresh(editor: vscode.TextEditor) {
+    setCursorLines(lines: number[]) {
+        this.cursorLines = new Set(lines);
+    }
+
+    async refresh(editor: vscode.TextEditor, currentLines?: number[]) {
         const name = editor.document.fileName;
         if (!this.lineData.has(name)) return;
         const fileMap = this.lineData.get(name)!;
@@ -55,13 +71,7 @@ export class HeatmapEngine {
         const maxFocusRange = vscode.workspace.getConfiguration('deeper').get<number>('maxFocusRange') || 20;
 
         const now = Date.now();
-        const ranges: vscode.Range[] = [];
-        const hotLines: Set<number> = new Set();
-        for (const [line, heat] of fileMap.entries()) {
-            if (now - heat.lastTouched <= dimAfter) {
-                hotLines.add(line);
-            }
-        }
+        const tierRanges: vscode.Range[][] = this.decoration.map(() => []);
 
         const symbols = await vscode.commands.executeCommand<vscode.DocumentSymbol[]>(
             'vscode.executeDocumentSymbolProvider',
@@ -69,25 +79,39 @@ export class HeatmapEngine {
         )
 
         const visibleLines: Set<number> = new Set();
-        for (const line of hotLines) {
+        for (const line of currentLines || []) {
             const symbol = findContainingSymbol(line, symbols || []);
             if (symbol && symbol.range.start.line != symbol.range.end.line) {
                 for (let l = Math.max(symbol.range.start.line, findContainingSymbol(line - maxFocusRange, symbols || [])?.range.start.line ?? line - maxFocusRange); l <= Math.min(symbol.range.end.line, findContainingSymbol(line + maxFocusRange, symbols || [])?.range.end.line ?? line + maxFocusRange); l++) {
                     visibleLines.add(l);
+                    fileMap.set(l, { lastTouched: now });
                 }
             } else {
                 for (let l = Math.max(0, findContainingSymbol(line - maxFocusRange, symbols || [])?.range.start.line ?? line - maxFocusRange); l <= Math.min(editor.document.lineCount - 1, findContainingSymbol(line + maxFocusRange, symbols || [])?.range.end.line ?? line + maxFocusRange); l++) {
                     visibleLines.add(l);
+                    fileMap.set(l, { lastTouched: now });
                 }
             }
         }
+        if (visibleLines.size > 0) {
+            this.setCursorLines([...visibleLines]);
+        }
 
         for (let i = 0; i < editor.document.lineCount; i++) {
-            if (!visibleLines.has(i)) {
-                ranges.push(editor.document.lineAt(i).range);
+            if (this.cursorLines.has(i)) continue;
+
+            const heat = fileMap.get(i);
+            const age = heat ? (now - heat.lastTouched) / dimAfter : Infinity;
+
+            const tierIndex = this.decoration.findIndex(d => age <= d.maxAge);
+            if (tierIndex >= 0) {
+                tierRanges[tierIndex].push(editor.document.lineAt(i).range);
             }
         }
-        editor.setDecorations(this.decoration, ranges);
+        
+        for (let i = 0; i < this.decoration.length; i++) {
+            editor.setDecorations(this.decoration[i].type, tierRanges[i]);
+        }
     }
 
     async startAutoRefresh(editor: vscode.TextEditor) {
@@ -97,6 +121,6 @@ export class HeatmapEngine {
 
     dispose() {
         clearInterval(this.timer!);
-        this.decoration.dispose();
+        this.decoration.forEach(d => d.type.dispose());
     }
 }
