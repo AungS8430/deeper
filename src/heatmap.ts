@@ -4,12 +4,6 @@ interface LineHeat {
     lastTouched: number;
 }
 
-const functionTypes = new Set([
-    vscode.SymbolKind.Function,
-    vscode.SymbolKind.Method,
-    vscode.SymbolKind.Constructor,
-])
-
 function findContainingSymbol(
     line: number,
     symbols: vscode.DocumentSymbol[]
