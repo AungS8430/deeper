@@ -73,7 +73,7 @@ export class HeatmapEngine {
                     visibleLines.add(l);
                 }
             } else {
-                for (let l = Math.max(0, line - maxFocusRange); l <= line + maxFocusRange; l++) {
+                for (let l = Math.max(0, findContainingSymbol(line - maxFocusRange, symbols || [])?.range.start.line ?? line - maxFocusRange); l <= Math.min(editor.document.lineCount - 1, findContainingSymbol(line + maxFocusRange, symbols || [])?.range.end.line ?? line + maxFocusRange); l++) {
                     visibleLines.add(l);
                 }
             }
